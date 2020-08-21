@@ -15,6 +15,29 @@ run_toolchain_box: toolchain_box
 		docker run --name "toolchain_box" --hostname "toolchain_box" -dit rbits/toolchain
 
 run_play_box: play_box
-		docker run --name "play_box" --hostname "play_box" -dit rbits/play_box
+	docker run --name "play_box" --hostname "play_box" -v $(REPO):/root/shared -dit rbits/play_box
 
+pull_ghidra_image:
+	docker pull blacktop/ghidra 
 
+run_ghidra_server: pull_ghidra_image
+	docker run --init -it --rm \
+             --name ghidra-server \
+             --cpus 2 \
+             --memory 500m \
+             -e MAXMEM=500M \
+             -e GHIDRA_USERS="root rbits" \
+             -v $(REPO):/shared \
+             blacktop/ghidra server
+
+run_ghidra: pull_ghidra_image	
+	docker run --init -it --rm \
+             --name ghidra \
+             --cpus 2 \
+             --memory 4g \
+             -e MAXMEM=4G \
+			 --net=host \
+             -e "DISPLAY" \
+			 -v="/run/user/1000/gdm/Xauthority:/root/.Xauthority:rw" \
+             -v $(REPO):/shared \
+             blacktop/ghidra
